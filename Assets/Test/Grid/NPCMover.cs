@@ -57,24 +57,69 @@ public class NPCMover : MonoBehaviour
         //transform.position = grid.GetNode(start).WorldPosition + Vector3.up * 0.5f; 
 
 
-        Vector3Int goal = pathfinder.GoalPosition;
-
-        List<Node> path = pathfinder.FindPath(start, goal); //build a path from the current position to the goal
-
-        if (path == null || path.Count == 0)
-        {
-
-            Debug.LogWarning("Path not found");
-
-            yield break;
-        }
-
-        StartCoroutine(FollowPath(path));
 
 
+       // //old
+       // //
+
+
+       // Vector3Int goal = pathfinder.GoalPosition;
+
+       // List<Node> path = pathfinder.FindPath(start, goal); //build a path from the current position to the goal
+
+       // if (path == null || path.Count == 0)
+       // {
+
+       //     Debug.LogWarning("Path not found");
+
+       //     yield break;
+       // }
+
+       // StartCoroutine(FollowPath(path));
+
+       ////.... StartCoroutine(MoveToNextCollectible());
+
+
+
+
+       // //
+       // //old
 
     }
 
+    //IEnumerator MoveToNextCollectible()
+    //{
+
+    //    yield return new WaitForSeconds(0.1f);
+
+
+    //    pathfinder = FindObjectOfType<Astar>();
+
+    //    grid = FindObjectOfType<Grid>();
+
+    //    Vector3Int start;
+
+    //    do
+    //    {
+
+    //        GameObject target = FindClosestobject();
+
+
+
+    //    }
+    //    while(true)
+    //    {
+
+
+
+    //    }
+
+
+
+
+    //   // GameObject FindClosestobject()
+
+    //}
 
 
     IEnumerator FollowPath(List<Node> path)
@@ -100,10 +145,71 @@ public class NPCMover : MonoBehaviour
            
     }
 
-     
-     
-      
+   //FoodFinding
 
+
+    public void StartPathTo(Vector3Int target, System.Action onComplete)
+    {
+
+
+        StopAllCoroutines();
+
+        Vector3Int start = grid.WorldToGridPosition(transform.position);
+
+        List<Node> path = pathfinder.FindPath(start, target);
+
+
+        if (path != null && path.Count > 0)
+        {
+
+            StartCoroutine(FollowPath(path, onComplete));
+
+        }
+        else
+        {
+
+            onComplete?.Invoke();  //if the path is not found then terminate
+
+        }
+
+    }
+
+    public int GetPathDistanceTo(Vector3Int target)
+    {
+
+        Vector3Int start = grid.WorldToGridPosition(transform.position);
+
+        List<Node> path = pathfinder.FindPath(start, target);
+
+        return path != null ? path.Count : int.MaxValue;
+
+    }
+
+
+
+    IEnumerator FollowPath(List<Node> path, System.Action onComplete)
+    {
+
+        foreach (Node node in path)
+        {
+            Vector3 target = node.WorldPosition + Vector3.up * 0.5f;
+
+            while ((transform.position - target).sqrMagnitude > 0.01f)
+            {
+
+                transform.position = Vector3.MoveTowards(transform.position, target, Time.deltaTime * speed);
+
+                yield return null;
+
+            }
+
+            yield return new WaitForSeconds(0.05f);
+
+        }
+
+        onComplete?.Invoke();
+
+    }
 
 
 }
